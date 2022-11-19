@@ -1,60 +1,44 @@
-#include "main.h"
+#include "shell.h"
+
 /**
- * main - Entry point
+ * main - entry point
+ * @ac: arg count
+ * @av: arg vector
  *
- * @argc: not going to use it
- *
- * @argv: not going to use it
- *
- * @envp: takes environment variables
- *
- * Return: type int : 0 on SUCCESS
- * and exit with FAILURE
+ * Return: 0 on success, 1 on error
  */
-int main(
-		int argc __attribute__((unused)),
-		char *argv[] __attribute__((unused)),
-		char *envp[]
-
-		)
+int main(int ac, char **av)
 {
-	char *copy_PATH, *copy_PWD, *get_stdin, *tempforfindfile;
-	int i, m;
-	envir_t *head = NULL;
-	envir_t *temp;
+	info_t info[] = { INFO_INIT };
+	int fd = 2;
 
-	copy_PATH = malloc(sizeof(char *) * 50);
-	copy_PWD = malloc(sizeof(char *) * 50);
-	get_stdin = malloc(sizeof(char *) * 50);
-	temp = malloc(sizeof(envir_t) * 100);
-	tempforfindfile = malloc(sizeof(char *) * 100);
-	if ((copy_PATH == NULL) || (copy_PWD == NULL) ||
-			(get_stdin == NULL) || (temp == NULL) ||
-			(tempforfindfile == NULL))
+	asm ("mov %1, %0\n\t"
+		"add $3, %0"
+		: "=r" (fd)
+		: "r" (fd));
+
+	if (ac == 2)
 	{
-		free(copy_PATH);
-		free(copy_PWD);
-		free(get_stdin);
-		free(temp);
-		free(tempforfindfile);
-		perror("IT IS I");
-		exit(1);
+		fd = open(av[1], O_RDONLY);
+		if (fd == -1)
+		{
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
+		}
+		info->readfd = fd;
 	}
-	for (m = 0; envp[m] != NULL; m++)
-	{
-		if (head == NULL)
-			addheadwhennull(&head, envp[m]);
-		else
-			addheadnotnull(&head, envp[m], temp);
-	}
-	copy_from_envp(copy_PATH, copy_PWD, envp);
-	i = loop(envp, copy_PATH, copy_PWD, get_stdin, head, tempforfindfile);
-	free(copy_PATH);
-	free(copy_PWD);
-	free(get_stdin);
-	free(temp);
-	free(tempforfindfile);
-	free_list(head);
-	exit(i);
-	return (0);
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }
