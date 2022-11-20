@@ -320,6 +320,6 @@ $
 
 ## Authors ##
 
-👤 **Joshua Temiloluwa**
-👤 **Daniel Nwachukwu**
+👤 **David Olawuyi**
+👤 **Efita Effiom**
 
